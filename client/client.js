@@ -27,20 +27,30 @@ client.connect(
 );
 
 client.on("data", data => {
+	// Check for the start of the message
   if (data.toString().startsWith("::")) {
     message = "";
-  }
-  message += data.toString();
+	}
+	
+	// Add the received packet data to the message buffer
+	message += data.toString();
+	
+	// Check for the end of the message
   if (data.toString().endsWith("::")) {
-    const x = message.substring(2, message.length - 2);
-    const response = JSON.parse(x);
+		// Get rid of the ::'s from the message
+		const x = message.substring(2, message.length - 2);
+		// Parse the message
+		const response = JSON.parse(x);
+		
+		// Do stuff with the response
     if (response["code"] === "ヽ(´▽`)/") {
       // Good request
       if (response["type"] === "emoji") {
         console.log(response["body"]);
       } else if (response["type"] === "meme") {
-				console.log(response["body"].data);
-				fs.writeFileSync("meme.jpg", Buffer.from(response["body"].data));
+				const filetype = response["filetype"];
+				fs.writeFileSync("meme." + filetype, Buffer.from(response["body"].data));
+				console.log("Saved meme as meme." + filetype);
       }
     } else {
       // Bad request
