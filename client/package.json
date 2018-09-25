@@ -1,9 +1,0 @@
-{
-  "name": "Emoji-Protocol",
-  "version": "1.0.0",
-  "description": "Server for the emoji protocol",
-  "main": "server.js",
-  "repository": "https://github.com/Rooknj/Emoji-Protocol.git",
-  "author": "Nick Rook <rooknj@outlook.com>",
-  "license": "MIT"
-}
