@@ -34,90 +34,76 @@ const badRequest = (socket) => {
 let bufferMessage = ''
 
 const server = net.createServer(socket => {
+    socket.on('connection', () => {
+        console.log('Connection has been made.')
+    })
+
     socket.on('data', data => {
         const dataString = data.toString()
         if (dataString.startsWith('::')) {
-            // this is the beginning of the message
+            // this marks the beginning of the message
             bufferMessage = ''
         }
 
         bufferMessage += dataString
 
         if (dataString.endsWith('::')) {
-            // this is the end of the message
-            socket.end()
+            // this marks the the end of the message
+            processRequest(socket)
         }
-
-        // if (dataString.startsWith('::')) {
-        //     // this is the beginning of the message
-        //     buffer += dataString.substr(3)
-        //     console.log('started')
-        // }
-        // if (dataString.endsWith('::')) {
-        //     // this is the end of the message
-        //     const dataLength = dataString.length
-        //     buffer += dataString.substr(0, dataLength - 3)
-        //     console.log('ended')
-
-        //     socket.end()
-        // } 
-        // if (!dataString.startsWith('::') && !dataString.endsWith('::')) {
-        //     // middle of message
-        //     buffer += dataString
-        // }
     })
 
-    socket.on('error', () => {
-        console.log('Error!')
+    socket.on('error', (error) => {
+        console.error('Error:')
+        console.error(error)
     })
 
     socket.on('end', () => {
-        console.log('Incoming data:', bufferMessage)
-        const dataJson = JSON.parse(bufferMessage)
+        console.log('Connection closed.')
+    })
+})
 
-        const requestType = dataJson['type'] || undefined
-        const requestName = dataJson['name'] || undefined
+server.listen(8080, '127.0.0.1')
 
-        if (!requestType) {
-            // bad request
-            badRequest(socket)
-        }
+const processRequest = (socket) => {
+    // Remove colon delimiters and parse as json
+    const colonLength = 2 // '::' is 2 characters
+    const buffer = bufferMessage.substring(colonLength, bufferMessage.length - colonLength)
+    const dataJson = JSON.parse(buffer)
 
-        if (requestType === 'emoji') {
-            const emoji = emojiTable[requestName]
-            if (requestName && emoji) {
-                const response = {
-                    code: emojiTable['happy face'],
-                    body: emoji
-                }
-                socket.write(`::${JSON.stringify(response)}::`)
-            } else {
-                // bad request
-                badRequest(socket)
-            }
-        } else if (requestType === 'meme') {
-            // read the meme data from file system
-            const fileData = readFile('wikipedia-meme.jpg')
-            
-            // respond with image data
+    const requestType = dataJson['type'] || undefined
+    const requestName = dataJson['name'] || undefined
+
+    if (requestType === 'emoji') {
+        const emoji = emojiTable[requestName]
+        if (requestName && emoji) {
             const response = {
                 code: emojiTable['happy face'],
-                body: fileData,
-                type: 'image/jpg'
+                body: emoji
             }
+
             socket.write(`::${JSON.stringify(response)}::`)
         } else {
             // bad request
             badRequest(socket)
         }
+    } else if (requestType === 'meme') {
+        // read the meme data from file system
+        const fileData = readFile('wikipedia-meme.jpg')
+        
+        // respond with image data
+        const response = {
+            code: emojiTable['happy face'],
+            body: fileData,
+            type: 'image/jpg'
+        }
 
-        socket.pipe(socket)
-    })
-})
+        socket.write(`::${JSON.stringify(response)}::`)
+    } else {
+        // bad request
+        badRequest(socket)
+    }
 
-server.on('error', error => {
-    console.error(error)
-    server.end()
-})
-
-server.listen(8080, '127.0.0.1')
+    socket.pipe(socket)
+    socket.end()
+}
