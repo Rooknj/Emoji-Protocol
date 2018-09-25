@@ -28,14 +28,52 @@ const emojiTable = {
 // Helper to send a bad request response 
 const badRequest = (socket) => {
     const response = { code: emojiTable['reddit disapproval face'] }
-    socket.write(JSON.stringify(response))
+    socket.write(`::${JSON.stringify(response)}::`)
 }
+
+let bufferMessage = ''
 
 const server = net.createServer(socket => {
     socket.on('data', data => {
-        // parse the incoming data as json
-        const dataJson = JSON.parse(data)
-        console.log('Incoming data:', dataJson)
+        const dataString = data.toString()
+        if (dataString.startsWith('::')) {
+            // this is the beginning of the message
+            bufferMessage = ''
+        }
+
+        bufferMessage += dataString
+
+        if (dataString.endsWith('::')) {
+            // this is the end of the message
+            socket.end()
+        }
+
+        // if (dataString.startsWith('::')) {
+        //     // this is the beginning of the message
+        //     buffer += dataString.substr(3)
+        //     console.log('started')
+        // }
+        // if (dataString.endsWith('::')) {
+        //     // this is the end of the message
+        //     const dataLength = dataString.length
+        //     buffer += dataString.substr(0, dataLength - 3)
+        //     console.log('ended')
+
+        //     socket.end()
+        // } 
+        // if (!dataString.startsWith('::') && !dataString.endsWith('::')) {
+        //     // middle of message
+        //     buffer += dataString
+        // }
+    })
+
+    socket.on('error', () => {
+        console.log('Error!')
+    })
+
+    socket.on('end', () => {
+        console.log('Incoming data:', bufferMessage)
+        const dataJson = JSON.parse(bufferMessage)
 
         const requestType = dataJson['type'] || undefined
         const requestName = dataJson['name'] || undefined
@@ -52,7 +90,7 @@ const server = net.createServer(socket => {
                     code: emojiTable['happy face'],
                     body: emoji
                 }
-                socket.write(JSON.stringify(response))
+                socket.write(`::${JSON.stringify(response)}::`)
             } else {
                 // bad request
                 badRequest(socket)
@@ -60,28 +98,21 @@ const server = net.createServer(socket => {
         } else if (requestType === 'meme') {
             // read the meme data from file system
             const fileData = readFile('wikipedia-meme.jpg')
+            
             // respond with image data
             const response = {
                 code: emojiTable['happy face'],
                 body: fileData,
                 type: 'image/jpg'
             }
-            socket.write(JSON.stringify(response))
+            socket.write(`::${JSON.stringify(response)}::`)
         } else {
             // bad request
             badRequest(socket)
         }
-    })
 
-    socket.on('error', () => {
-        console.log('Error!')
+        socket.pipe(socket)
     })
-
-    socket.on('end', () => {
-        console.log('done!')
-    })
-
-	socket.pipe(socket)
 })
 
 server.on('error', error => {
