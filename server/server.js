@@ -107,5 +107,6 @@ const emojiTable = {
     "double flip": "┻━┻ ︵ヽ(`Д´)ﾉ︵﻿ ┻━┻",
     "cute bear": "ʕ•ᴥ•ʔ",
     "squinting bear": "ʕᵔᴥᵔʔ",
-    "cute face with big eyes": "(｡◕‿◕｡)"
+    "cute face with big eyes": "(｡◕‿◕｡)",
+    "happy face": "ヽ(´▽`)/"
 }
