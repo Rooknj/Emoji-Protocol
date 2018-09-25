@@ -1,6 +1,7 @@
 const net = require("net");
+const fs = require("fs");
 
-const message = "";
+let message = "";
 
 const client = new net.Socket();
 client.connect(
@@ -8,41 +9,46 @@ client.connect(
   "127.0.0.1",
   () => {
     console.log("Connected");
-    // Request Emoji
-    const emojiRequest = {
-      type: "emoji",
-      name: "cute bear"
-    };
-    client.write("::" + JSON.stringify(emojiRequest) + "::");
-
-    // Request Meme
-    const memeRequest = {
-      type: "meme"
-    };
-    client.write("::" + JSON.stringify(memeRequest) + "::");
+    if (process.argv[2] === "meme") {
+      // Request Meme
+      const memeRequest = {
+        type: "meme"
+      };
+      client.write("::" + JSON.stringify(memeRequest) + "::");
+    } else {
+      // Request Emoji
+      const emojiRequest = {
+        type: "emoji",
+        name: process.argv[2]
+      };
+      client.write("::" + JSON.stringify(emojiRequest) + "::");
+    }
   }
 );
 
 client.on("data", data => {
-	console.log("DATA")
-	if(data.toString().startsWith("::")) {
-		console.log("Starts");
-		message="";
-	}
-	message += data.toString();
-	if(data.toString.endsWith("::")) {
-		console.log("ends");
-		console.log(message.substring(2, message.length-2));
-	}
+  if (data.toString().startsWith("::")) {
+    message = "";
+  }
+  message += data.toString();
+  if (data.toString().endsWith("::")) {
+    const x = message.substring(2, message.length - 2);
+    const response = JSON.parse(x);
+    if (response["code"] === "ヽ(´▽`)/") {
+      // Good request
+      if (response["type"] === "emoji") {
+        console.log(response["body"]);
+      } else if (response["type"] === "meme") {
+				console.log(response["body"].data);
+				fs.writeFileSync("meme.jpg", Buffer.from(response["body"].data));
+      }
+    } else {
+      // Bad request
+      console.log("Bad request");
+    }
+  }
   //console.log("Received: " + data);
-  //const response = JSON.parse(data);
-  // if(response["code"] === "ヽ(´▽`)/") {
-  // 	// Good request
-  // 	console.log("Response body:", response["body"])
-  // } else {
-  // 	// Bad request
-  // 	console.log("Bad request");
-  // }
+
   //client.destroy(); // kill client after server's response
 });
 
