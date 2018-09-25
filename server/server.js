@@ -4,7 +4,7 @@ const fs = require('fs')
 let bufferMessage = ''
 
 const server = net.createServer(socket => {
-    socket.on('connection', () => {
+    socket.on('connect', () => {
         console.log('Connection has been made.')
     })
 
@@ -65,13 +65,13 @@ const processRequest = (socket) => {
     } else if (requestType === 'meme') {
         // read the meme data from file system
         const fileData = readFile('wikipedia-meme.jpg')
-        
+
         // respond with image data
         const response = {
             type: 'meme',
             code: emojiTable['happy face'],
             body: fileData,
-            filetype: 'image/jpg'
+            filetype: 'jpg'
         }
 
         socket.write(`::${JSON.stringify(response)}::`)
@@ -92,12 +92,12 @@ const badRequest = (socket) => {
 }
 
 
-// Helper to 
+// Helper to read a file from the current directory
 const readFile = (filename) => {
     return fs.readFileSync(`./${filename}`)
 }
 
-// ASCII emoji data from https://github.com/dysfunc/ascii-emoji
+// ASCII emoji data table from https://github.com/dysfunc/ascii-emoji
 const emojiTable = {
     'innocent face': 'ʘ‿ʘ',
     "reddit disapproval face": "ಠ_ಠ",
@@ -105,14 +105,7 @@ const emojiTable = {
     "put the table back": "┬─┬﻿ ノ( ゜-゜ノ)",
     "tidy up": "┬─┬⃰͡ (ᵔᵕᵔ͜ )",
     "double flip": "┻━┻ ︵ヽ(`Д´)ﾉ︵﻿ ┻━┻",
-    "fisticuffs": "ლ(｀ー´ლ)",
     "cute bear": "ʕ•ᴥ•ʔ",
     "squinting bear": "ʕᵔᴥᵔʔ",
-    "GTFO Bear": "ʕ •`ᴥ•´ʔ",
-    "cute face with big eyes": "(｡◕‿◕｡)",
-    "surprised": "（　ﾟДﾟ）",
-    "shrug face": "¯\_(ツ)_/¯",
-    "meh": "¯\(°_o)/¯",
-    "feel perky": "(`･ω･´)",
-    "happy face": "ヽ(´▽`)/"
+    "cute face with big eyes": "(｡◕‿◕｡)"
 }
